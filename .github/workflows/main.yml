@@ -1,55 +1,63 @@
-name: Build and Deploy Web
+name: Flutter Web Build
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout Repository
+      # 1. گرفتن آخرین کدهای ریپازیتوری
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      # 2. راه اندازی جاوا ۱۷ (برای گام‌های پایه یا اندرویدی احتمالی در آینده)
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Flutter (Compatible with Dart 3.6+)
+      # 3. نصب و تنظیم فلاتر نسخه 3.27.0
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0' # نسخه‌ای که هم دارت مناسب دارد و هم ارور Cupertino نمی‌دهد
+          flutter-version: '3.27.0'
           channel: 'stable'
-          architecture: X64
           cache: false
 
-      - name: Create Env File
+      # 4. ساخت خودکار فایل‌های محیطی که در لاگت داشتی
+      - name: Create .env file
         run: |
           echo "BASE_URL=http://localhost" >> .env
           echo "CAPTACHA_SITE_KEY=mock" >> .env
           echo "CAPTACHA_SECRET_KEY=mock" >> .env
           echo "INVITE_CODE=1234" >> .env
 
-      - name: Get Dependencies
+      # 5. 🔥 تزریق خودکار و هوشمند اورراید به انتهای pubspec برای دور زدن خطای intl
+      - name: Inject dependency override for intl
+        run: |
+          echo "" >> pubspec.yaml
+          echo "dependency_overrides:" >> pubspec.yaml
+          echo "  intl: ^0.20.2" >> pubspec.yaml
+
+      # 6. گرفتن پکیج‌ها (حالا بدون هیچ اروری رد می‌شود)
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Configure Web Index
-        run: |
-          sed -i 's|<base href="[^"]*">|<base href="\$FLUTTER_BASE_HREF">|g' web/index.html
-          if ! grep -q '<base href="\$FLUTTER_BASE_HREF">' web/index.html; then
-            sed -i 's|<head>|<head>\n  <base href="\$FLUTTER_BASE_HREF">|g' web/index.html
-          fi
-
+      # 7. گرفتن خروجی نهایی وب
       - name: Build Web Application
-        run: flutter build web --base-href "/" --no-wasm-dry-run
+        run: flutter build web --release
 
-      - name: Upload Build Artifacts
+      # 8. آپلود خروجی در گیت‌هاب برای دانلود مستقیم تو
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: web-build
-          path: build/web
+          name: flutter-web-build
+          path: build/web/

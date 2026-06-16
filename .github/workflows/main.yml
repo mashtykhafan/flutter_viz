@@ -1,60 +1,55 @@
-name: Build Flutter Web for Local Download
+name: Build and Deploy Web
 
 on:
   push:
     branches:
-      - main # اگر نام برنچ اصلی شما master است، این را به master تغییر دهید
+      - main
+  workflow_dispatch:
 
 jobs:
   build-web:
     runs-on: ubuntu-latest
 
     steps:
-      # ۱. دریافت کدهای پروژه از گیت‌هاب
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ۲. نصب و راه‌اندازی جاوا
-      - name: Set up Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # ۳. نصب و تنظیم فلاتر (نسخه استیبل)
-      - name: Set up Flutter
+      - name: Setup Flutter (Compatible Version)
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.19.6'
           channel: 'stable'
+          architecture: X64
+          cache: false
 
-      # ۴. ساخت فایل .env فرضی برای دور زدن خطاهای کامپایل پروژه
-      - name: Create .env file
+      - name: Create Env File
         run: |
           echo "BASE_URL=http://localhost" >> .env
           echo "CAPTACHA_SITE_KEY=mock" >> .env
           echo "CAPTACHA_SECRET_KEY=mock" >> .env
           echo "INVITE_CODE=1234" >> .env
 
-      # ۵. دریافت پکیج‌های فلاتر
-      - name: Install dependencies
+      - name: Get Dependencies
         run: flutter pub get
 
-      # ۶. حل مشکل base href در فایل index.html به صورت خودکار
-      - name: Fix Base Href for Flutter Build
+      - name: Configure Web Index
         run: |
           sed -i 's|<base href="[^"]*">|<base href="\$FLUTTER_BASE_HREF">|g' web/index.html
-          # اگر تگ بیس کلاً وجود نداشته باشد، آن را به داخل تگ head اضافه میکنیم:
           if ! grep -q '<base href="\$FLUTTER_BASE_HREF">' web/index.html; then
             sed -i 's|<head>|<head>\n  <base href="\$FLUTTER_BASE_HREF">|g' web/index.html
           fi
 
-      # ۷. کامپایل پروژه برای وب
       - name: Build Web Application
-        run: flutter build web --base-href "/"
+        run: flutter build web --base-href "/" --no-wasm-dry-run
 
-      # ۸. زیپ کردن پوشه build/web و آماده‌سازی برای دانلود
-      - name: Upload Web Build Artifact
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-viz-web-release
-          path: build/web/
+          name: web-build
+          path: build/web

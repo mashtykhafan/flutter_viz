@@ -3,31 +3,31 @@ name: Build Flutter Web for Local Download
 on:
   push:
     branches:
-      - main # یا master (برنچ اصلی خود را وارد کنید)
+      - main # اگر نام برنچ اصلی شما master است، این را به master تغییر دهید
 
 jobs:
   build-web:
     runs-on: ubuntu-latest
 
     steps:
-      # ۱. دریافت کدهای پروژه
+      # ۱. دریافت کدهای پروژه از گیت‌هاب
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ۲. نصب جاوا
+      # ۲. نصب و راه‌اندازی جاوا
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # ۳. نصب فلاتر
+      # ۳. نصب و تنظیم فلاتر (نسخه استیبل)
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      # ۴. ساخت فایل .env فرضی برای عبور از ارورها
+      # ۴. ساخت فایل .env فرضی برای دور زدن خطاهای کامپایل پروژه
       - name: Create .env file
         run: |
           echo "BASE_URL=http://localhost" >> .env
@@ -35,18 +35,17 @@ jobs:
           echo "CAPTACHA_SECRET_KEY=mock" >> .env
           echo "INVITE_CODE=1234" >> .env
 
-      # ۵. دریافت پکیج‌ها
+      # ۵. دریافت پکیج‌های فلاتر
       - name: Install dependencies
         run: flutter pub get
 
-      # ۶. کامپایل فلاتر برای وب
-      # استفاده از href="./" برای این است که پروژه در هر مسیر لوکالی بدون مشکل لود شود
+      # ۶. کامپایل پروژه برای وب با استاندارد صحیح فلاتر
       - name: Build Web Application
-        run: flutter build web --base-href "./"
+        run: flutter build web --base-href "/"
 
-      # ۷. زیپ کردن و آماده‌سازی فایل برای دانلود
+      # ۷. زیپ کردن پوشه build/web و آماده‌سازی برای دانلود
       - name: Upload Web Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-viz-web-release # نام فایل زپ خروجی
-          path: build/web/ # پوشه‌ای که باید زیپ شود
+          name: flutter-viz-web-release # نام فایل زپ خروجی برای دانلود
+          path: build/web/

@@ -17,22 +17,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. راه اندازی جاوا ۱۷ (برای گام‌های پایه یا اندرویدی احتمالی در آینده)
+      # 2. راه اندازی جاوا ۱۷
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # 3. نصب و تنظیم فلاتر نسخه 3.27.0
+      # 3. 🌟 آپدیت نسخه فلاتر به 3.44.2 برای هماهنگی با دارت جدید و پکیج Syncfusion
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
+          flutter-version: '3.44.2'
           channel: 'stable'
           cache: false
 
-      # 4. ساخت خودکار فایل‌های محیطی که در لاگت داشتی
+      # 4. ساخت خودکار فایل‌های محیطی .env
       - name: Create .env file
         run: |
           echo "BASE_URL=http://localhost" >> .env
@@ -40,14 +40,14 @@ jobs:
           echo "CAPTACHA_SECRET_KEY=mock" >> .env
           echo "INVITE_CODE=1234" >> .env
 
-      # 5. 🔥 تزریق خودکار و هوشمند اورراید به انتهای pubspec برای دور زدن خطای intl
+      # 5. تزریق اورراید برای محکم‌کاری تداخل‌های احتمالی
       - name: Inject dependency override for intl
         run: |
           echo "" >> pubspec.yaml
           echo "dependency_overrides:" >> pubspec.yaml
           echo "  intl: ^0.20.2" >> pubspec.yaml
 
-      # 6. گرفتن پکیج‌ها (حالا بدون هیچ اروری رد می‌شود)
+      # 6. گرفتن پکیج‌ها (این بار با نسخه جدید دارت بدون مشکل رد می‌شود)
       - name: Install dependencies
         run: flutter pub get
 

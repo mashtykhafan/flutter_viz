@@ -39,13 +39,22 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # ۶. کامپایل پروژه برای وب با استاندارد صحیح فلاتر
+      # ۶. حل مشکل base href در فایل index.html به صورت خودکار
+      - name: Fix Base Href for Flutter Build
+        run: |
+          sed -i 's|<base href="[^"]*">|<base href="\$FLUTTER_BASE_HREF">|g' web/index.html
+          # اگر تگ بیس کلاً وجود نداشته باشد، آن را به داخل تگ head اضافه میکنیم:
+          if ! grep -q '<base href="\$FLUTTER_BASE_HREF">' web/index.html; then
+            sed -i 's|<head>|<head>\n  <base href="\$FLUTTER_BASE_HREF">|g' web/index.html
+          fi
+
+      # ۷. کامپایل پروژه برای وب
       - name: Build Web Application
         run: flutter build web --base-href "/"
 
-      # ۷. زیپ کردن پوشه build/web و آماده‌سازی برای دانلود
+      # ۸. زیپ کردن پوشه build/web و آماده‌سازی برای دانلود
       - name: Upload Web Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-viz-web-release # نام فایل زپ خروجی برای دانلود
+          name: flutter-viz-web-release
           path: build/web/

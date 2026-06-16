@@ -1,0 +1,52 @@
+name: Build Flutter Web for Local Download
+
+on:
+  push:
+    branches:
+      - main # یا master (برنچ اصلی خود را وارد کنید)
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ۱. دریافت کدهای پروژه
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ۲. نصب جاوا
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # ۳. نصب فلاتر
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # ۴. ساخت فایل .env فرضی برای عبور از ارورها
+      - name: Create .env file
+        run: |
+          echo "BASE_URL=http://localhost" >> .env
+          echo "CAPTACHA_SITE_KEY=mock" >> .env
+          echo "CAPTACHA_SECRET_KEY=mock" >> .env
+          echo "INVITE_CODE=1234" >> .env
+
+      # ۵. دریافت پکیج‌ها
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ۶. کامپایل فلاتر برای وب
+      # استفاده از href="./" برای این است که پروژه در هر مسیر لوکالی بدون مشکل لود شود
+      - name: Build Web Application
+        run: flutter build web --base-href "./"
+
+      # ۷. زیپ کردن و آماده‌سازی فایل برای دانلود
+      - name: Upload Web Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-viz-web-release # نام فایل زپ خروجی
+          path: build/web/ # پوشه‌ای که باید زیپ شود

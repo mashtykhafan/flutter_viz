@@ -20,10 +20,10 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Flutter (Compatible Version)
+      - name: Setup Flutter (Compatible with Dart 3.6+)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'
+          flutter-version: '3.27.0' # نسخه‌ای که هم دارت مناسب دارد و هم ارور Cupertino نمی‌دهد
           channel: 'stable'
           architecture: X64
           cache: false
